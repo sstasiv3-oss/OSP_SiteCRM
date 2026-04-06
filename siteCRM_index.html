@@ -13,8 +13,17 @@
             <li><a href="siteCRM_contacts.html">Контакти</a></li>
             <li><a href="siteCRM_admin.html">Адмін-панель</a></li>
             <li><a href="siteCRM_about.html">Про нас</a></li>
+
         </ul>
+        
     </nav>
+
+    <ul class = "login">
+    <li><a href="siteCRM_login.html">Вхід</a></li>
+</ul>
+
+
+    
 
     <main class="content">
         <header class="top-bar">
@@ -30,13 +39,29 @@
         </section>
 
         <section class="search-section">
-            <input type="text" id="searchInput" placeholder="Пошук об'єктів (Пункт 7)...">
-        </section>
+            <input type="text" id="searchInput" placeholder="Пошук об'єктів">
+            <select id="statusFilter" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; min-width: 150px; cursor: pointer;">
+        <option value="all">Всі статуси</option>
+        <option value="Новий">Новий</option>
+        <option value="Постійний">Постійний</option>
+        <option value="VIP">VIP</option>
+        <option value="В роботі">В роботі</option>
+    </select>
+    </select>
 
         <div id="clientsGrid" class="grid">
             </div>
+
+            <div class="pagination-wrapper">
+  </div>
+  <ul id="pagination" class="pagination-list">
+    </ul>
+    </div>
+
+
     </main>
 
-    <script src="siteCRM.js"></script>
+
+    <script src="siteCRM_script.js"></script>
 </body>
 </html>
