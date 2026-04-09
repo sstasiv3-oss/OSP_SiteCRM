@@ -10,20 +10,11 @@
         <h2>CRM System</h2>
         <ul>
             <li><a href="siteCRM_index.html" class="active">Головна</a></li>
-            <li><a href="siteCRM_contacts.html">Контакти</a></li>
+            <li><a href="siteCRM_manege.html">Менеджмент-панель</a></li>
             <li><a href="siteCRM_admin.html">Адмін-панель</a></li>
             <li><a href="siteCRM_about.html">Про нас</a></li>
-
         </ul>
-        
     </nav>
-
-    <ul class = "login">
-    <li><a href="siteCRM_login.html">Вхід</a></li>
-</ul>
-
-
-    
 
     <main class="content">
         <header class="top-bar">
@@ -32,35 +23,33 @@
         </header>
 
         <section class="stats">
-            <div class="stat-card">
+            <div class="stat-card" style="background: #5c59f2; color: white;">
                 <h3>Клієнти</h3>
                 <p id="client-count">0</p>
             </div>
         </section>
 
-        <section class="search-section">
-            <input type="text" id="searchInput" placeholder="Пошук об'єктів">
-            <select id="statusFilter" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; min-width: 150px; cursor: pointer;">
-        <option value="all">Всі статуси</option>
-        <option value="Новий">Новий</option>
-        <option value="Постійний">Постійний</option>
-        <option value="VIP">VIP</option>
-        <option value="В роботі">В роботі</option>
-    </select>
-    </select>
+        <section class="search-section" style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <input type="text" id="searchInput" placeholder="Пошук (ім'я, email або компанія)..." style="flex: 1;">
+            
+            <select id="statusFilter" class="form-input" style="width: auto; min-width: 150px;">
+                <option value="all">Всі статуси</option>
+                <option value="Новий">Новий</option>
+                <option value="Постійний">Постійний</option>
+                <option value="VIP">VIP</option>
+                <option value="В роботі">В роботі</option>
+            </select>
+        </section>
 
         <div id="clientsGrid" class="grid">
             </div>
 
-            <div class="pagination-wrapper">
-  </div>
-  <ul id="pagination" class="pagination-list">
-    </ul>
-    </div>
-
-
+        <div class="pagination-wrapper" style="margin-top: 30px; display: flex; justify-content: center; flex-direction: column; align-items: center;">
+            <ul id="pagination" class="pagination-list" style="display: flex; list-style: none; gap: 10px; padding: 0;">
+            </ul>
+            <button id="showMoreBtn" class="btn-top-auth" style="margin-top: 15px; display: none;">Показати більше</button>
+        </div>
     </main>
-
 
     <script src="siteCRM_script.js"></script>
 </body>

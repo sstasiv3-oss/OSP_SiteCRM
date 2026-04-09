@@ -1,13 +1,23 @@
-/* Базові налаштування */
+/* =========================================
+   1. ГЛОБАЛЬНІ НАЛАШТУВАННЯ (Змінні та Body)
+   ========================================= */
 :root {
-    --primary: #4f46e5;    /* Основний синій */
+    --primary: #4f46e5;    
     --primary-hover: #4338ca;
-    --bg-light: #f8fafc;   /* Фон сторінки */
-    --sidebar-bg: #1e293b; /* Темний сайдбар */
+    --primary-light: #eef2ff;
+    --bg-light: #f8fafc;   
+    --sidebar-bg: #1e293b; 
     --text-main: #1e293b;
     --text-muted: #64748b;
     --white: #ffffff;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -16,9 +26,12 @@ body {
     background-color: var(--bg-light);
     color: var(--text-main);
     font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100vh;
 }
 
-/* Сайдбар (Пункт 1-2) */
+/* =========================================
+   2. САЙДБАР (Sidebar)
+   ========================================= */
 .sidebar {
     width: 260px;
     background-color: var(--sidebar-bg);
@@ -27,6 +40,8 @@ body {
     padding: 24px;
     position: sticky;
     top: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar h2 {
@@ -41,6 +56,7 @@ body {
 .sidebar ul {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .sidebar a {
@@ -59,14 +75,21 @@ body {
     color: var(--white);
 }
 
-/* Основний контент */
+.login {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid #334155; 
+    margin-top: auto; 
+    padding-top: 20px;
+}
+
+/* =========================================
+   3. ОСНОВНИЙ КОНТЕНТ ТА ШАПКА
+   ========================================= */
 .content {
     flex: 1;
     padding: 40px;
-    max-width: 1200px;
-    box-sizing: border-box; /* ДОДАНО: Щоб паддінги не ламали ширину */
-    
-    /* ДОДАНО: Робимо контент гнучким стовпцем на всю висоту екрана */
+    max-width: 1300px;
     display: flex;
     flex-direction: column;
     min-height: 100vh; 
@@ -82,211 +105,9 @@ body {
 .top-bar h1 {
     font-size: 1.875rem;
     font-weight: 700;
-}
-
-/* Пошук (Пункт 7) */
-#searchInput {
-    width: 100%;
-    max-width: 400px;
-    padding: 12px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
-    outline: none;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-#searchInput:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-/* Сітка та Картки (Пункт 4-5) */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-    margin-top: 32px;
-    margin-bottom: 30px; /* ДОДАНО: Відступ знизу від карток до пагінації */
-}
-
-.card {
-    background: var(--white);
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    border: 1px solid #f1f5f9;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-}
-
-.card h3 {
-    margin: 0 0 12px 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-}
-
-.card p {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    margin: 8px 0;
-}
-
-.card b {
-    color: var(--primary);
-    background: #eef2ff;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-}
-
-/* Кнопки (Пункт 8) */
-.btn-del {
-    margin-top: 16px;
-    color: #ef4444;
-    background: #fef2f2;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.875rem;
-    width: 100%;
-    transition: background 0.2s;
-}
-
-.btn-del:hover {
-    background: #fee2e2;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 16px;
-    width: 200px;
-}
-
-.stat-card p {
-    font-size: 2rem;
-    font-weight: 800;
     margin: 0;
 }
 
-.login {
-    list-style: none;
-    padding: 0;
-    border-top: 5px solid #2d3748; 
-    margin-top: auto; 
-}
-
-/* --- Контейнер форми --- */
-.auth-section {
-    margin-top: 20px; 
-    max-width: 300px; 
-    padding: 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-    text-align: center;
-}
-
-.input-group {
-    margin-bottom: 15px;
-}
-
-/* --- Поля вводу --- */
-.form-input {
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box; 
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.form-input:focus {
-    border-color: #007bff; 
-    outline: none;
-}
-
-/* --- Кнопка --- */
-.btn-submit {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-}
-
-.btn-submit:hover {
-    background-color: #0056b3; 
-}
-
-/* =========================================
-   СТИЛІ ДЛЯ СТОРІНКИ ВХОДУ
-   ========================================= */
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh; 
-    padding: 20px;
-}
-
-.auth-section {
-    background: #ffffff;
-    width: 100%;
-    max-width: 360px; 
-    padding: 40px 30px;
-    border-radius: 12px; 
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); 
-    border: 1px solid #eef0f5;
-    text-align: center;
-}
-
-.auth-section h3 {
-    margin-top: 0;
-    margin-bottom: 30px;
-    color: #2c3e50;
-    font-size: 24px;
-}
-
-.input-group {
-    margin-bottom: 20px;
-}
-
-.form-input {
-    width: 100%;
-    padding: 14px 16px;
-    box-sizing: border-box;
-    border: 1.5px solid #dce1e7;
-    border-radius: 8px;
-    font-size: 15px;
-    background-color: #f8fafc; 
-    transition: all 0.3s ease; 
-}
-
-.form-input:focus {
-    border-color: #4361ee; 
-    background-color: #ffffff;
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15); 
-}
-
-/* =========================================
-   КНОПКИ В ШАПЦІ (ВХІД / ВИХІД)
-   ========================================= */
 #auth-status {
     display: flex;
     align-items: center;
@@ -295,141 +116,308 @@ body {
 
 #auth-status span {
     font-size: 15px;
-    color: #4a5568; 
+    color: var(--text-muted); 
     font-weight: 500;
 }
 
-.btn-top-auth {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 24px;
-    background-color: #6366f1; 
-    color: #ffffff !important; 
-    text-decoration: none; 
-    border: none;
-    border-radius: 8px; 
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.25); 
-    transition: all 0.3s ease; 
+/* =========================================
+   4. ДАШБОРД (Статистика та Пошук)
+   ========================================= */
+.stat-card {
+    background: linear-gradient(135deg, #6366f1 0%, var(--primary) 100%);
+    color: white;
+    padding: 24px;
+    border-radius: 16px;
+    width: 240px;
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+    margin-bottom: 32px;
 }
 
-.btn-top-auth:hover {
-    background-color: #4f46e5;
-    box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4); 
-    transform: translateY(-2px); 
+.stat-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    opacity: 0.9;
 }
 
-.btn-top-auth:active {
-    transform: translateY(1px); 
+.stat-card p {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
 }
 
-.btn-logout {
-    background-color: #ef4444; 
-    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.25);
+.search-section {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
 }
 
-.btn-logout:hover {
-    background-color: #dc2626;
-    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
+/* Поля вводу (Input & Select) */
+.form-input {
+    padding: 12px 16px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    background-color: var(--white);
+    transition: all 0.2s;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
 /* =========================================
-   ПАГІНАЦІЯ
+   5. СІТКА КАРТОК (Grid)
    ========================================= */
-.pagination-wrapper {
-  margin-top: auto; /* ДОДАНО МАГІЮ: Цей відступ автоматично пружинить і штовхає блок у самісінький низ екрана! */
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.show-more-container {
-  display: flex;
-  justify-content: center;
-  padding: 15px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.show-more-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.show-more-btn span {
-  background-color: #000;
-  color: #fff;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
-}
-
-.pagination-list {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.pagination-list li {
-  flex-grow: 1;
-  text-align: center;
-  border-right: 1px solid #e0e0e0;
-}
-
-.pagination-list li:last-child {
-  border-right: none;
-}
-
-.pagination-list button {
-  width: 100%;
-  padding: 15px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  transition: background 0.2s;
-}
-
-.pagination-list button:hover {
-  background-color: #f5f5f5;
-}
-
-.pagination-list button.active {
-  background-color: #f0f0f0;
-  color: #000;
-}
-
-.pagination-list button:disabled {
-  color: #aaa;
-  cursor: not-allowed;
-}
-
-/* Сітка та Картки (Пункт 4-5) */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
-    margin-top: 32px;
-    margin-bottom: 30px; 
-    
-    /* === РЯТУВАЛЬНИЙ КРУГ ВІД СТРИБКІВ === */
-    min-height: 360px; /* Фіксуємо висоту під 2 ряди карток */
-    align-content: start; /* Притискаємо картки до верху, щоб вони не розтягувалися на всю діру */
+    margin-bottom: 40px; 
+    min-height: 360px;
+    align-content: start;
+}
+
+.card-item {
+    background: var(--white);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #eef2f6;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.card-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(92, 89, 242, 0.15);
+    border-color: var(--primary);
+}
+
+.card-item__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.card-company {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-item p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.card-item__tag {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 6px 14px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* =========================================
+   6. ТАБЛИЦЯ АДМІНІСТРАТОРА
+   ========================================= */
+.admin-table-container {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid #eef2f6;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.admin-table th {
+    background-color: #f8fafc;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+}
+
+.admin-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-table td b {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.admin-table tbody tr:hover {
+    background-color: #fbfcfd;
+}
+
+/* =========================================
+   7. КНОПКИ ТА ЕЛЕМЕНТИ КЕРУВАННЯ
+   ========================================= */
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-hover);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btn-edit {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.btn-edit:hover {
+    background-color: #e0e7ff;
+    transform: translateY(-1px);
+}
+
+.btn-del {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+
+.btn-del:hover {
+    background-color: #fee2e2;
+    transform: translateY(-1px);
+}
+
+/* Кнопка входу/виходу в шапці */
+.btn-top-auth {
+    padding: 10px 24px;
+    background-color: var(--primary);
+    color: var(--white) !important;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-top-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-logout { background-color: var(--danger); }
+.btn-logout:hover { background-color: #dc2626; }
+
+/* =========================================
+   8. ПАГІНАЦІЯ (Pagination)
+   ========================================= */
+.pagination-wrapper {
+    margin-top: auto; 
+    padding: 20px 0;
+}
+
+.pagination-list {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    gap: 10px;
+    padding: 0;
+}
+
+.btn-pag {
+    padding: 10px 18px;
+    border: 1px solid #e2e8f0;
+    background: var(--white);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text-main);
+    transition: all 0.2s;
+}
+
+.btn-pag.active {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.btn-pag:hover:not(.active):not(:disabled) {
+    background: #f1f5f9;
+}
+
+.btn-pag:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* =========================================
+   9. АВТОРИЗАЦІЯ ТА МОДАЛКИ
+   ========================================= */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.auth-section {
+    background: var(--white);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eef2f6;
+    text-align: center;
+}
+
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(30, 41, 59, 0.7);
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
 }

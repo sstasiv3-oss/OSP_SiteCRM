@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM - Адмін-панель</title>
+    <link rel="stylesheet" href="siteCRM_style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>CRM System</h2>
+        <ul>
+            <li><a href="siteCRM_index.html">Головна</a></li>
+            <li><a href="siteCRM_contacts.html">Менеджмент-панель</a></li>
+            <li><a href="siteCRM_admin.html" class="active">Адмін-панель</a></li>
+            <li><a href="siteCRM_about.html">Про нас</a></li>
+        </ul>
+    </nav>
+
+    <main class="content">
+    <header class="top-bar">
+        <h1>Керування клієнтами (CRUD)</h1>
+        <div id="auth-status"></div>
+    </header>
+
+    <section class="auth-section" style="max-width: 800px; margin: 0 auto 40px; padding: 40px;">
+        <h3 id="submitTitle" style="margin-bottom: 25px;">Додати нового клієнта</h3>
+        <form id="adminCrudForm">
+            <input type="hidden" id="editIndex">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="input-group">
+                    <label style="display:block; text-align:left; margin-bottom:5px; font-weight:600;">ПІБ клієнта</label>
+                    <input type="text" id="objName" class="form-input" placeholder="Іван Іванов" required>
+                </div>
+                <div class="input-group">
+                    <label style="display:block; text-align:left; margin-bottom:5px; font-weight:600;">Компанія</label>
+                    <input type="text" id="objCompany" class="form-input" placeholder="Apple Inc.">
+                </div>
+                <div class="input-group">
+                    <label style="display:block; text-align:left; margin-bottom:5px; font-weight:600;">Email</label>
+                    <input type="email" id="objEmail" class="form-input" placeholder="mail@example.com" required>
+                </div>
+                <div class="input-group">
+                    <label style="display:block; text-align:left; margin-bottom:5px; font-weight:600;">Телефон</label>
+                    <input type="text" id="objPhone" class="form-input" placeholder="+380..." required>
+                </div>
+            </div>
+            
+            <div class="input-group" style="margin-top: 10px;">
+                <label style="display:block; text-align:left; margin-bottom:5px; font-weight:600;">Статус</label>
+                <select id="objStatus" class="form-input">
+                    <option value="Новий">Новий</option>
+                    <option value="Постійний">Постійний</option>
+                    <option value="VIP">VIP</option>
+                    <option value="В роботі">В роботі</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 20px; height: 50px;">Записати в базу</button>
+        </form>
+    </section>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; gap: 15px; flex: 1;">
+            <input type="text" id="adminSearchInput" class="form-input" placeholder="Пошук клієнта..." style="max-width: 300px;">
+            <select id="adminStatusFilter" class="form-input" style="max-width: 200px;">
+                <option value="all">Всі статуси</option>
+                <option value="Новий">Новий</option>
+                <option value="Постійний">Постійний</option>
+                <option value="VIP">VIP</option>
+                <option value="В роботі">В роботі</option>
+            </select>
+        </div>
+        <div class="stat-card" style="width: auto; padding: 10px 25px; margin-bottom: 0;">
+            <span style="font-size: 0.9rem; opacity: 0.8;">Всього клієнтів: </span>
+            <b id="admin-results-count" style="font-size: 1.2rem;">0</b>
+        </div>
+    </div>
+
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Клієнт</th>
+                    <th>Компанія</th>
+                    <th>Контакти</th>
+                    <th>Статус</th>
+                    <th style="text-align: right;">Керування</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody">
+                </tbody>
+        </table>
+    </div>
+</main>
+
+    <script src="siteCRM_script.js"></script>
+</body>
+</html>

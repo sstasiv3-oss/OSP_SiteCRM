@@ -1,5 +1,6 @@
 [
   { "id": 1, "username": "ivan_user", "password": "123", "role": "user", "fullName": "Іван Звичайний" },
   { "id": 2, "username": "admin_main", "password": "admin777", "role": "admin", "fullName": "Микола Адмінович" },
-  { "id": 3, "username": "boss_owner", "password": "root", "role": "owner", "fullName": "Олександр Власник" }
+  { "id": 3, "username": "boss_owner", "password": "root", "role": "owner", "fullName": "Олександр Власник" },
+  { "id": 4, "username": "bro_maneger", "password": "manco", "role": "maneger", "fullName": "Стас Менеджер" }
 ]
