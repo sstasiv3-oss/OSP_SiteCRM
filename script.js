@@ -1,24 +1,29 @@
-// =====================
-// 1. НАЛАШТУВАННЯ ТА ДАНІ
-// =====================
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+// 1. НАЛАШТУВАННЯ SUPABASE
+const supabaseUrl = 'https://mqvznnhiniqadngotizq.supabase.co'
+const supabaseKey = 'sb_publishable_GmsljKr6QkiBMpljKEXg9Q_cD-iGU1u'
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Налаштування пагінації
 let currentPage = 1;
 const itemsPerPage = 6; 
 let currentFilteredList = []; 
 
+// =====================
+// 1. РОБОТА З ДАНИМИ (СИНХРОНІЗАЦІЯ З SUPABASE)
+// =====================
+
 async function initData() {
-    if (!localStorage.getItem("clients") || localStorage.getItem("clients") === "[]") {
-        try {
-            const res = await fetch("clients.json");
-            const data = await res.json();
-            localStorage.setItem("clients", JSON.stringify(data));
-        } catch (e) { console.error("Помилка завантаження clients.json:", e); }
-    }
-    if (!localStorage.getItem("users")) {
-        try {
-            const res = await fetch("users.json");
-            localStorage.setItem("users", JSON.stringify(await res.json()));
-        } catch (e) { console.error("Помилка завантаження users.json:", e); }
-    }
+    // Отримуємо клієнтів з Supabase
+    const { data: clients, error } = await supabase.from('clients').select('*');
+    if (error) console.error("Помилка завантаження клієнтів:", error);
+    else localStorage.setItem("clients", JSON.stringify(clients));
+
+    // Отримуємо користувачів
+    const { data: users, error: userError } = await supabase.from('users').select('*');
+    if (userError) console.error("Помилка завантаження користувачів:", userError);
+    else localStorage.setItem("users", JSON.stringify(users));
 }
 
 const getClients = () => JSON.parse(localStorage.getItem("clients")) || [];
@@ -73,7 +78,7 @@ function renderMainGrid(list) {
     grid.innerHTML = paginatedItems.length === 0 ? "<p>Нічого не знайдено</p>" : 
     paginatedItems.map(c => `
         <article class="card-item">
-        <h4 class="card-item__title" style="word-break: break-all;">${c.name}</h4>
+            <h4 class="card-item__title" style="word-break: break-all;">${c.name}</h4>
             <p class="card-company" style="color: #5c59f2; font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase;">
                 ${c.company || "Приватна особа"}
             </p>
@@ -90,18 +95,16 @@ function renderAdminTable(list) {
     if (!table) return;
     updateCounters(list.length);
     table.innerHTML = list.map((c) => {
-        const all = getClients();
-        const realIndex = all.findIndex(orig => orig.email === c.email);
         return `<tr>
-            <td><b>${c.name}</b></td>
+            <td><b style="word-break: break-all;">${c.name}</b></td>
             <td style="color: #5c59f2; font-weight: 600;">${c.company || "—"}</td>
             <td>${c.email}</td>
             <td>${c.phone}</td>
             <td><span class="card-itemtag">${c.status}</span></td>
             <td>
                 <div class="action-buttons">
-                    <button onclick="prepareEdit(${realIndex})" class="btn-action btn-edit">Ред.</button>
-                    <button onclick="deleteClient(${realIndex})" class="btn-action btn-del">Вид.</button>
+                    <button onclick="prepareEdit('${c.id}')" class="btn-action btn-edit">Ред.</button>
+                    <button onclick="deleteClient('${c.id}')" class="btn-action btn-del">Вид.</button>
                 </div>
             </td>
         </tr>`;
@@ -125,26 +128,29 @@ function applyAllFilters() {
 }
 
 // =====================
-// 4. CRUD ОПЕРАЦІЇ
+// 4. CRUD ОПЕРАЦІЇ (SUPABASE)
 // =====================
-function deleteClient(index) {
+async function deleteClient(id) {
     if (confirm("Видалити клієнта?")) {
-        const clients = getClients();
-        clients.splice(index, 1);
-        localStorage.setItem("clients", JSON.stringify(clients));
-        refreshAll();
+        const { error } = await supabase.from('clients').delete().eq('id', id);
+        if (error) alert("Помилка видалення");
+        else {
+            await initData();
+            refreshAll();
+        }
     }
 }
 
-function prepareEdit(index) {
-    const c = getClients()[index];
+async function prepareEdit(id) {
+    const clients = getClients();
+    const c = clients.find(item => item.id === id);
     if (!c) return;
     document.getElementById("objName").value = c.name;
     document.getElementById("objCompany").value = c.company || "";
     document.getElementById("objEmail").value = c.email;
     document.getElementById("objPhone").value = c.phone;
     document.getElementById("objStatus").value = c.status;
-    document.getElementById("editIndex").value = index;
+    document.getElementById("editIndex").value = id; // Тепер тут ID бази даних
     document.getElementById("submitBtn").innerText = "Оновити дані";
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -201,78 +207,91 @@ window.onload = () => {
             document.getElementById(id)?.addEventListener("change", applyAllFilters);
         });
 
-        document.getElementById("adminCrudForm")?.addEventListener("submit", (e) => {
+        document.getElementById("adminCrudForm")?.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const clients = getClients();
-            const index = document.getElementById("editIndex").value;
-            const data = {
+            const id = document.getElementById("editIndex").value;
+            const clientData = {
                 name: document.getElementById("objName").value,
                 company: document.getElementById("objCompany").value,
                 email: document.getElementById("objEmail").value,
                 phone: document.getElementById("objPhone").value,
                 status: document.getElementById("objStatus").value
             };
-            if (index === "") clients.unshift(data);
-            else clients[index] = data;
-            localStorage.setItem("clients", JSON.stringify(clients));
+
+            if (id === "") {
+                // Створення нового
+                await supabase.from('clients').insert([clientData]);
+            } else {
+                // Оновлення існуючого
+                await supabase.from('clients').update(clientData).eq('id', id);
+            }
+
+            await initData();
             location.reload();
         });
     });
 };
 
 // =====================
-// 6. СИСТЕМА БАГІВ
+// 6. СИСТЕМА БАГІВ (SUPABASE)
 // =====================
 const bugForm = document.getElementById("bugReportForm");
 if (bugForm) {
-    bugForm.addEventListener("submit", (e) => {
+    bugForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const user = currentUser();
         const report = {
-            id: Date.now(),
             subject: document.getElementById("bugSubject").value,
             category: document.getElementById("bugCategory").value,
             description: document.getElementById("bugText").value,
-            userName: user ? user.fullName : "Гість",
-            userRole: user ? user.role : "немає",
-            date: new Date().toLocaleString(),
+            user_name: user ? user.fullName : "Гість",
+            user_role: user ? user.role : "немає",
             status: "Новий"
         };
-        const bugs = JSON.parse(localStorage.getItem("systemBugs")) || [];
-        bugs.unshift(report);
-        localStorage.setItem("systemBugs", JSON.stringify(bugs));
-        bugForm.style.display = "none";
-        document.getElementById("reportSuccess").style.display = "block";
-        setTimeout(() => { window.location.href = "index.html"; }, 2500);
+
+        const { error } = await supabase.from('bugs').insert([report]);
+        
+        if (!error) {
+            bugForm.style.display = "none";
+            document.getElementById("reportSuccess").style.display = "block";
+            setTimeout(() => { window.location.href = "index.html"; }, 2500);
+        }
     });
 }
 
-function renderBugReports() {
+async function renderBugReports() {
     const container = document.getElementById("bugReportsList");
-    const countEl = document.getElementById("bug-count");
     if (!container) return;
-    const bugs = JSON.parse(localStorage.getItem("systemBugs")) || [];
+
+    const { data: bugs, error } = await supabase.from('bugs').select('*').order('created_at', { ascending: false });
+    if (error) return;
+
+    const countEl = document.getElementById("bug-count");
     if (countEl) countEl.innerText = bugs.length;
     
-    container.innerHTML = bugs.map((bug, index) => `
+    container.innerHTML = bugs.map((bug) => `
         <article class="card-item" style="border-left: 5px solid ${getStatusColor(bug.status)}">
-            <h4 class="card-itemtitle">${bug.subject}</h4>
+            <h4 class="card-itemtitle" style="word-break: break-all;">${bug.subject}</h4>
             <div class="card-company">${bug.category}</div>
-            <p style="background: #f8fafc; padding: 10px; border-radius: 8px;">${bug.description}</p>
-            <p style="font-size: 0.8rem;">Від: <b>${bug.userName}</b> | ${bug.date}</p>
+            <p style="background: #f8fafc; padding: 10px; border-radius: 8px; word-break: break-all;">${bug.description}</p>
+            <p style="font-size: 0.8rem;">Від: <b>${bug.user_name}</b> | ${new Date(bug.created_at).toLocaleString()}</p>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="changeBugStatus(${index})" class="btn-action btn-edit">Статус</button>
-                <button onclick="deleteBug(${index})" class="btn-action btn-del">Видалити</button>
+                <button onclick="changeBugStatus('${bug.id}', '${bug.status}')" class="btn-action btn-edit">Статус</button>
+                <button onclick="deleteBug('${bug.id}')" class="btn-action btn-del">Видалити</button>
             </div>
         </article>`).join("");
 }
 
 function getStatusColor(s) { return s === "Виправлено" ? "#22c55e" : s === "В процесі" ? "#3b82f6" : "#f59e0b"; }
-function deleteBug(i) { let b = JSON.parse(localStorage.getItem("systemBugs")); b.splice(i,1); localStorage.setItem("systemBugs", JSON.stringify(b)); renderBugReports(); }
-function changeBugStatus(i) {
-    let b = JSON.parse(localStorage.getItem("systemBugs"));
-    const s = ["Новий", "В процесі", "Виправлено"];
-    b[i].status = s[(s.indexOf(b[i].status) + 1) % 3];
-    localStorage.setItem("systemBugs", JSON.stringify(b));
+
+async function deleteBug(id) {
+    await supabase.from('bugs').delete().eq('id', id);
+    renderBugReports();
+}
+
+async function changeBugStatus(id, currentStatus) {
+    const statuses = ["Новий", "В процесі", "Виправлено"];
+    const nextStatus = statuses[(statuses.indexOf(currentStatus) + 1) % 3];
+    await supabase.from('bugs').update({ status: nextStatus }).eq('id', id);
     renderBugReports();
 }
