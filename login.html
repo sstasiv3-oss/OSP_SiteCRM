@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM - Вхід</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="display: block;"> <main class="content" style="max-width: 100%; margin: 0; display: flex; align-items: center; justify-content: center;">
+        
+        <div class="login-container">
+            <section class="auth-section">
+                <h2 style="margin-bottom: 10px; color: var(--primary);">CRM System</h2>
+                <h3>Вхід у систему</h3>
+                
+                <div class="input-group">
+                    <input type="text" id="loginInput" class="form-input" placeholder="Логін">
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="passInput" class="form-input" placeholder="Пароль">
+                </div>
+                
+                <div id="loginError" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 15px; display: none;">
+                    ❌ Невірний логін або пароль
+                </div>
+                
+                <button id="loginBtn" class="btn-submit">Увійти</button>
+                
+                <p style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">
+                    Зверніться до адміністратора, якщо забули дані
+                </p>
+            </section>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // Додаємо обробник події прямо тут або в основний JS
+        document.getElementById('loginBtn').onclick = function() {
+            const loginVal = document.getElementById('loginInput').value;
+            const passVal = document.getElementById('passInput').value;
+            handleLogin(loginVal, passVal);
+        };
+
+        // Дозволяємо вхід через клавішу Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('loginBtn').click();
+        });
+
+        function handleLogin(username, password) {
+            const users = JSON.parse(localStorage.getItem("users")) || [];
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                localStorage.setItem("currentUser", JSON.stringify(user));
+                window.location.href = "index.html";
+            } else {
+                document.getElementById('loginError').style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>

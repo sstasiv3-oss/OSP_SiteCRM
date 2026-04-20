@@ -1,0 +1,26 @@
+{
+  "name": "sitecrm",
+  "version": "1.0.0",
+  "description": "{1. Переназвати всі файли 2. До кінця розібратися з кодом 3. Зробити повноцінну адмінку для редагування, створення клієнтів CRUD} - НА ЧЕТВЕР",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sstasiv3-oss/OSP_SiteCRM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sstasiv3-oss/OSP_SiteCRM/issues"
+  },
+  "homepage": "https://github.com/sstasiv3-oss/OSP_SiteCRM#readme",
+  "devDependencies": {
+    "eslint": "^10.2.0",
+    "prettier": "^3.8.3",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.8"
+  }
+}

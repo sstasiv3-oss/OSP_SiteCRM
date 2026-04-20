@@ -197,7 +197,7 @@ body {
     border-color: var(--primary);
 }
 
-.card-item__title {
+.card-itemtitle {
     font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-main);
@@ -218,7 +218,7 @@ body {
     color: var(--text-muted);
 }
 
-.card-item__tag {
+.card-itemtag {
     align-self: flex-start;
     margin-top: 10px;
     padding: 6px 14px;
@@ -420,4 +420,23 @@ body {
     justify-content: center;
     align-items: center;
     backdrop-filter: blur(4px);
+}
+
+/* Це змусить будь-який текст всередині карток "ламатися" */
+.card-item {
+    min-width: 0; /* Важливо для flex/grid контейнерів */
+}
+
+.card-item__title, 
+.card-item p, 
+.card-company {
+    word-break: break-all !important; /* Примусово розриває будь-яке слово */
+    overflow-wrap: anywhere !important; /* Новіша властивість для складних випадків */
+    white-space: normal !important; /* Забороняє тексту йти в один рядок */
+}
+
+/* Для таблиці в адмінці */
+.admin-table td {
+    max-width: 200px; /* Обмежуємо максимальну ширину комірки */
+    word-break: break-all !important;
 }

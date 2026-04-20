@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM - Менеджер звітів</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>CRM System</h2>
+        <ul>
+            <li><a href="index.html">Головна</a></li>
+            <li><a href="manege.html">Менеджмент-панель</a></li>
+            <li><a href="admin.html">Адмін-панель</a></li>
+            <li><a href="report.html">Знайшли помилку?</a></li>
+            <li><a href="bugmanager.html" class="active">Менеджер репортів</a></li>
+        </ul>
+        <ul class="login" id="auth-status-sidebar">
+            </ul>
+    </nav>
+
+    <main class="content">
+        <header class="top-bar">
+            <h1>Управління технічними звітами</h1>
+            <div id="auth-status"></div>
+        </header>
+
+        <section class="stats" style="margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); margin-bottom: 0;">
+                <h3>Активні звіти</h3>
+                <p id="bug-count">0</p>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="renderBugReports()" class="btn-top-auth" style="background-color: var(--primary);">Оновити список</button>
+                <button onclick="if(confirm('Видалити всі звіти?')) { localStorage.removeItem('systemBugs'); renderBugReports(); }" class="btn-top-auth btn-logout">Очистити все</button>
+            </div>
+        </section>
+
+        <div id="bugReportsList" class="grid">
+            </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
