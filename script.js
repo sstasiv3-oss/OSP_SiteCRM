@@ -5,33 +5,35 @@ const supabaseUrl = 'https://mqvznnhiniqadngotizq.supabase.co'
 const supabaseKey = 'sb_publishable_GmsljKr6QkiBMpljKEXg9Q_cD-iGU1u'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Налаштування пагінації
+// Глобальні змінні
 let currentPage = 1;
 const itemsPerPage = 6; 
 let currentFilteredList = []; 
 
-// =====================
-// 1. РОБОТА З ДАНИМИ (СИНХРОНІЗАЦІЯ З SUPABASE)
-// =====================
-
-async function initData() {
-    // Отримуємо клієнтів з Supabase
-    const { data: clients, error } = await supabase.from('clients').select('*');
-    if (error) console.error("Помилка завантаження клієнтів:", error);
-    else localStorage.setItem("clients", JSON.stringify(clients));
-
-    // Отримуємо користувачів
-    const { data: users, error: userError } = await supabase.from('users').select('*');
-    if (userError) console.error("Помилка завантаження користувачів:", userError);
-    else localStorage.setItem("users", JSON.stringify(users));
-}
-
 const getClients = () => JSON.parse(localStorage.getItem("clients")) || [];
 const currentUser = () => JSON.parse(localStorage.getItem("currentUser"));
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// =====================
-// 2. ВІДОБРАЖЕННЯ ТА ПАГІНАЦІЯ
-// =====================
+// ==========================================
+// 1. РОБОТА З ДАНИМИ
+// ==========================================
+
+async function initData() {
+    try {
+        const { data: clients, error: clError } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
+        if (clError) throw clError;
+        localStorage.setItem("clients", JSON.stringify(clients || []));
+
+        const { data: users, error: usError } = await supabase.from('users').select('*');
+        localStorage.setItem("users", JSON.stringify(usError ? [] : (users || [])));
+    } catch (e) {
+        console.error("Критична помилка ініціалізації:", e.message);
+    }
+}
+
+// ==========================================
+// 2. ВІДОБРАЖЕННЯ (ГОЛОВНА ТА АДМІНКА)
+// ==========================================
 
 function updateCounters(count) {
     const mainCounter = document.getElementById("client-count");
@@ -40,49 +42,21 @@ function updateCounters(count) {
     if (adminCounter) adminCounter.innerText = count;
 }
 
-function renderPagination(totalItems) {
-    const paginationEl = document.getElementById("pagination");
-    if (!paginationEl) return;
-
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    paginationEl.innerHTML = "";
-    if (totalPages <= 1) return;
-
-    const prevLi = document.createElement("li");
-    prevLi.innerHTML = `<button class="btn-pag" ${currentPage === 1 ? 'disabled' : ''}>←</button>`;
-    prevLi.onclick = () => { if (currentPage > 1) { currentPage--; renderMainGrid(currentFilteredList); } };
-    paginationEl.appendChild(prevLi);
-
-    for (let i = 1; i <= totalPages; i++) {
-        const li = document.createElement("li");
-        li.innerHTML = `<button class="btn-pag ${currentPage === i ? 'active' : ''}">${i}</button>`;
-        li.onclick = () => { currentPage = i; renderMainGrid(currentFilteredList); };
-        paginationEl.appendChild(li);
-    }
-
-    const nextLi = document.createElement("li");
-    nextLi.innerHTML = `<button class="btn-pag" ${currentPage === totalPages ? 'disabled' : ''}>→</button>`;
-    nextLi.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainGrid(currentFilteredList); } };
-    paginationEl.appendChild(nextLi);
-}
-
 function renderMainGrid(list) {
     const grid = document.getElementById("clientsGrid");
     if (!grid) return;
-
     currentFilteredList = list;
     updateCounters(list.length);
+
     const start = (currentPage - 1) * itemsPerPage;
     const paginatedItems = list.slice(start, start + itemsPerPage);
 
     grid.innerHTML = paginatedItems.length === 0 ? "<p>Нічого не знайдено</p>" : 
     paginatedItems.map(c => `
-        <article class="card-item">
+        <article class="card-item" onclick="showClientDetails('${c.id}')" style="cursor: pointer; overflow-wrap: break-word; min-width: 0;">
             <h4 class="card-item__title" style="word-break: break-all;">${c.name}</h4>
-            <p class="card-company" style="color: #5c59f2; font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase;">
-                ${c.company || "Приватна особа"}
-            </p>
-            <p>📧 ${c.email}</p>
+            <p class="card-company" style="color: #5c59f2; font-weight: 700; word-break: break-all;">${c.company || "Приватна особа"}</p>
+            <p style="word-break: break-all;">📧 ${c.email}</p>
             <p>📞 ${c.phone}</p>
             <span class="card-itemtag">${c.status}</span>
         </article>
@@ -94,11 +68,12 @@ function renderAdminTable(list) {
     const table = document.getElementById("adminTableBody");
     if (!table) return;
     updateCounters(list.length);
-    table.innerHTML = list.map((c) => {
-        return `<tr>
-            <td><b style="word-break: break-all;">${c.name}</b></td>
-            <td style="color: #5c59f2; font-weight: 600;">${c.company || "—"}</td>
-            <td>${c.email}</td>
+
+    table.innerHTML = list.map((c) => `
+        <tr>
+            <td style="word-break: break-all; max-width: 150px;"><b>${c.name}</b></td>
+            <td style="word-break: break-all;">${c.company || "—"}</td>
+            <td style="word-break: break-all;">${c.email}</td>
             <td>${c.phone}</td>
             <td><span class="card-itemtag">${c.status}</span></td>
             <td>
@@ -107,53 +82,219 @@ function renderAdminTable(list) {
                     <button onclick="deleteClient('${c.id}')" class="btn-action btn-del">Вид.</button>
                 </div>
             </td>
-        </tr>`;
-    }).join("");
+        </tr>
+    `).join("");
 }
 
-// =====================
-// 3. ПОШУК ТА ФІЛЬТРИ
-// =====================
+// ==========================================
+// 3. МЕНЕДЖМЕНТ-ПАНЕЛЬ ТА МОДАЛКА КЛІЄНТА
+// ==========================================
+
+window.showClientDetails = function(id) {
+    const client = getClients().find(c => String(c.id) === String(id));
+    if (!client) return;
+
+    let modal = document.getElementById("client-info-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "client-info-modal";
+        modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(30,41,59,0.7); display:flex; justify-content:center; align-items:center; z-index:9999; backdrop-filter:blur(4px);";
+        document.body.appendChild(modal);
+    } else {
+        modal.style.display = "flex";
+    }
+
+    const managerName = client.manager || client.manager_name || "Не призначено";
+
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 450px; position: relative; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+            <button onclick="document.getElementById('client-info-modal').style.display='none'" style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;">&times;</button>
+            
+            <h2 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.5rem; word-break: break-all;">${client.name}</h2>
+            <span class="card-itemtag" style="display: inline-block; margin-bottom: 20px;">${client.status}</span>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase;">Компанія</div>
+                    <div style="font-size: 1rem; color: #4f46e5; font-weight: 600; word-break: break-all;">${client.company || "Приватна особа"}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase;">Email</div>
+                    <div style="word-break: break-all;"><a href="mailto:${client.email}" style="color: #1e293b; text-decoration: none;">${client.email}</a></div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase;">Телефон</div>
+                    <div><a href="tel:${client.phone}" style="color: #1e293b; text-decoration: none;">${client.phone}</a></div>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                    <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase;">Відповідальний менеджер</div>
+                    <div style="font-size: 0.95rem; color: #1e293b; font-weight: 500; margin-top: 3px;">${managerName}</div>
+                </div>
+
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
+                    <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 5px;">Нотатки менеджера</div>
+                    <div style="font-size: 0.9rem; color: #334155; line-height: 1.5; word-break: break-word;">${client.note || "Немає приміток."}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.onclick = function(event) {
+        if (event.target === modal) modal.style.display = "none";
+    };
+};
+
+function renderManagementStats() {
+    const clients = getClients();
+    const total = clients.length;
+    
+    const vip = clients.filter(c => ['vip', 'постійний'].includes(c.status?.toLowerCase())).length;
+    const newLeads = clients.filter(c => ['новий', 'new'].includes(c.status?.toLowerCase())).length;
+
+    if (document.getElementById("total-clients")) document.getElementById("total-clients").innerText = total;
+    if (document.getElementById("vip-clients")) document.getElementById("vip-clients").innerText = vip;
+    if (document.getElementById("new-leads")) document.getElementById("new-leads").innerText = newLeads;
+
+    const distributionEl = document.getElementById("status-distribution");
+    if (distributionEl && total > 0) {
+        const statuses = {};
+        clients.forEach(c => { statuses[c.status] = (statuses[c.status] || 0) + 1; });
+
+        distributionEl.innerHTML = Object.entries(statuses).map(([name, count]) => {
+            const percent = Math.round((count / total) * 100);
+            return `
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                        <span>${name}</span><b>${count} (${percent}%)</b>
+                    </div>
+                    <div style="background: #edf2f7; height: 10px; border-radius: 5px; overflow: hidden;">
+                        <div style="background: #6366f1; width: ${percent}%; height: 100%;"></div>
+                    </div>
+                </div>`;
+        }).join("");
+    }
+}
+
+function renderManagementTable(list) {
+    const tableBody = document.getElementById("client-table-body");
+    if (!tableBody) return;
+
+    tableBody.innerHTML = (!list || list.length === 0) ? "<tr><td colspan='3'>Нічого не знайдено</td></tr>" : 
+    list.map(c => `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px;">
+                <div style="font-weight: 700;">${c.name}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">${c.email || ''}</div>
+            </td>
+            <td><span class="card-itemtag" style="font-size: 0.7rem; padding: 2px 8px;">${c.status}</span></td>
+            <td style="text-align: right;">
+                <button class="btn-action btn-edit" onclick="selectClientForEdit('${c.id}')">✎</button>
+            </td>
+        </tr>`).join("");
+}
+
+// Оновлена функція редагування з полем для менеджера
+window.selectClientForEdit = async function(id) {
+    const client = getClients().find(c => String(c.id) === String(id));
+    if (!client) return;
+
+    const editZone = document.getElementById("edit-zone");
+    if (editZone) {
+        editZone.style.display = "block";
+        
+        // Повністю перемальовуємо зону редагування, щоб додати поле менеджера
+        editZone.innerHTML = `
+            <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #4f46e5;">Редагування: ${client.name}</h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="font-size: 0.7rem; font-weight: bold; color: #64748b;">СТАТУС</label>
+                    <select id="edit-status" class="form-input" style="width: 100%; padding: 5px; font-size: 0.85rem;">
+                        <option value="Новий" ${client.status === 'Новий' ? 'selected' : ''}>Новий</option>
+                        <option value="В роботі" ${client.status === 'В роботі' ? 'selected' : ''}>В роботі</option>
+                        <option value="Постійний" ${client.status === 'Постійний' ? 'selected' : ''}>Постійний</option>
+                        <option value="VIP" ${client.status === 'VIP' ? 'selected' : ''}>VIP</option>
+                        <option value="active" ${client.status === 'active' ? 'selected' : ''}>active</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; font-weight: bold; color: #64748b;">МЕНЕДЖЕР</label>
+                    <input type="text" id="edit-manager" class="form-input" placeholder="Ім'я менеджера..." value="${client.manager || ''}" style="width: 100%; padding: 5px; font-size: 0.85rem;">
+                </div>
+            </div>
+            
+            <label style="font-size: 0.7rem; font-weight: bold; color: #64748b;">НОТАТКИ</label>
+            <textarea id="edit-note" class="form-input" style="width: 100%; height: 50px; font-size: 0.8rem;" placeholder="Примітка...">${client.note || ""}</textarea>
+            
+            <button id="save-edit-btn" class="btn-submit" style="width: 100%; margin-top: 10px; padding: 8px; font-size: 0.85rem;">Зберегти зміни</button>
+        `;
+
+        const saveBtn = document.getElementById("save-edit-btn");
+
+        saveBtn.onclick = async () => {
+            saveBtn.innerText = "Зберігаю...";
+            
+            // Збираємо нові дані з форми
+            const updatedData = {
+                status: document.getElementById("edit-status").value,
+                manager: document.getElementById("edit-manager").value, // Зберігаємо менеджера
+                note: document.getElementById("edit-note").value
+            };
+
+            const { error } = await supabase.from('clients').update(updatedData).eq('id', id);
+            
+            if (!error) {
+                location.reload(); 
+            } else {
+                alert("Помилка: " + error.message);
+                saveBtn.innerText = "Зберегти зміни";
+            }
+        };
+    }
+};
+
+// ==========================================
+// 4. ФІЛЬТРИ ТА КЕРУВАННЯ
+// ==========================================
+
+window.deleteClient = async (id) => { 
+    if (confirm("Видалити клієнта?")) { 
+        const { error } = await supabase.from('clients').delete().eq('id', id); 
+        if (error) alert("Помилка: " + error.message);
+        else { await initData(); location.reload(); } 
+    } 
+};
+
+window.prepareEdit = function(id) {
+    const client = getClients().find(item => String(item.id) === String(id));
+    if (!client) return;
+
+    document.getElementById("objName").value = client.name;
+    document.getElementById("objCompany").value = client.company || "";
+    document.getElementById("objEmail").value = client.email;
+    document.getElementById("objPhone").value = client.phone;
+    document.getElementById("objStatus").value = client.status;
+    document.getElementById("editIndex").value = id; 
+    document.getElementById("submitBtn").innerText = "Оновити дані";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 function applyAllFilters() {
     currentPage = 1;
     const text = (document.getElementById("adminSearchInput")?.value || document.getElementById("searchInput")?.value || "").toLowerCase();
     const status = document.getElementById("adminStatusFilter")?.value || document.getElementById("statusFilter")?.value || "all";
+    
     const filtered = getClients().filter(c => {
-        const matchT = c.name.toLowerCase().includes(text) || c.email.toLowerCase().includes(text) || (c.company && c.company.toLowerCase().includes(text));
+        const matchT = c.name.toLowerCase().includes(text) || c.email.toLowerCase().includes(text);
         const matchS = (status === "all") || (c.status === status);
         return matchT && matchS;
     });
+
     renderAdminTable(filtered);
     renderMainGrid(filtered);
 }
-
-// =====================
-// 4. CRUD ОПЕРАЦІЇ (SUPABASE)
-// =====================
-async function deleteClient(id) {
-    if (confirm("Видалити клієнта?")) {
-        const { error } = await supabase.from('clients').delete().eq('id', id);
-        if (error) alert("Помилка видалення");
-        else {
-            await initData();
-            refreshAll();
-        }
-    }
-}
-
-async function prepareEdit(id) {
-    const clients = getClients();
-    const c = clients.find(item => item.id === id);
-    if (!c) return;
-    document.getElementById("objName").value = c.name;
-    document.getElementById("objCompany").value = c.company || "";
-    document.getElementById("objEmail").value = c.email;
-    document.getElementById("objPhone").value = c.phone;
-    document.getElementById("objStatus").value = c.status;
-    document.getElementById("editIndex").value = id; // Тепер тут ID бази даних
-    document.getElementById("submitBtn").innerText = "Оновити дані";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+window.applyAllFilters = applyAllFilters;
 
 function refreshAll() {
     const data = getClients();
@@ -161,53 +302,141 @@ function refreshAll() {
     renderMainGrid(data);
 }
 
-// =====================
-// 5. ЗАХИСТ ТА ЗАПУСК
-// =====================
-function checkAccess() {
-    const user = currentUser();
-    const path = window.location.pathname;
-    const adminLink = document.querySelector('a[href="admin.html"]');
-    const bugManagerLink = document.querySelector('a[href="bugmanager.html"]');
-    const authSidebar = document.getElementById("auth-status-sidebar");
+// ==========================================
+// 5. ПАГІНАЦІЯ
+// ==========================================
 
-    if (!user) {
-        if (authSidebar) authSidebar.innerHTML = `<li><a href="login.html" style="color:#4ade80; font-weight:bold;">Вхід у систему</a></li>`;
-        if (adminLink) adminLink.parentElement.style.display = "none";
-        if (bugManagerLink) bugManagerLink.parentElement.style.display = "none";
-    } else if (user.role !== "admin") {
-        if (adminLink) adminLink.parentElement.style.display = "none";
-        if (bugManagerLink) bugManagerLink.parentElement.style.display = "none";
+function renderPagination(totalItems) {
+    const el = document.getElementById("pagination");
+    if (!el) return;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    el.innerHTML = "";
+    if (totalPages <= 1) return;
+
+    const container = document.createElement("ul");
+    container.className = "pagination-container";
+    container.style.display = "flex";
+    container.style.justifyContent = "center";
+    container.style.gap = "10px";
+    container.style.listStyle = "none";
+
+    const prevLi = document.createElement("li");
+    prevLi.innerHTML = `<button class="btn-pag" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>«</button>`;
+    prevLi.onclick = () => { if (currentPage > 1) { currentPage--; renderMainGrid(currentFilteredList); window.scrollTo({ top: 0, behavior: 'smooth' }); } };
+    container.appendChild(prevLi);
+
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement("li");
+        li.innerHTML = `<button class="btn-pag ${currentPage === i ? 'active' : ''}">${i}</button>`;
+        li.onclick = () => { currentPage = i; renderMainGrid(currentFilteredList); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        container.appendChild(li);
     }
 
-    if ((path.includes("admin.html") || path.includes("bugmanager.html")) && (!user || user.role !== "admin")) {
-        window.location.href = "index.html";
-    }
+    const nextLi = document.createElement("li");
+    nextLi.innerHTML = `<button class="btn-pag" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>»</button>`;
+    nextLi.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainGrid(currentFilteredList); window.scrollTo({ top: 0, behavior: 'smooth' }); } };
+    container.appendChild(nextLi);
+
+    el.appendChild(container);
 }
 
-window.onload = () => {
-    initData().then(() => {
-        const user = currentUser();
-        const authStatus = document.getElementById("auth-status");
-        if (authStatus) {
-            if (user) {
-                authStatus.innerHTML = `<span>${user.fullName} (<b>${user.role}</b>)</span> 
-                <button onclick="localStorage.removeItem('currentUser'); location.reload();" class="btn-top-auth btn-logout">Вийти</button>`;
-            } else {
-                authStatus.innerHTML = `<a href="login.html" class="btn-top-auth" style="background-color:#22c55e;">Увійти</a>`;
-            }
-        }
+// ==========================================
+// 6. СИСТЕМА БАГІВ
+// ==========================================
 
-        refreshAll();
-        checkAccess();
-        if (window.location.pathname.includes("bugmanager")) renderBugReports();
+async function renderBugReports() {
+    const container = document.getElementById("bugReportsList");
+    if (!container) return;
+    const { data: bugs } = await supabase.from('bugs').select('*').order('created_at', { ascending: false });
+    
+    container.innerHTML = (!bugs || bugs.length === 0) ? "<p>Звітів немає.</p>" : 
+    bugs.map(bug => `
+        <article class="card-item" style="border-left: 5px solid ${getStatusColor(bug.status)}; margin-bottom: 15px; padding: 15px;">
+            <h4 style="word-break: break-all;">${bug.subject}</h4>
+            <div style="color: #5c59f2; font-weight: bold; font-size: 0.8rem;">${bug.category}</div>
+            <p style="background: #f1f5f9; padding: 10px; border-radius: 5px; margin: 10px 0; word-break: break-all;">${bug.description}</p>
+            <div style="font-size: 0.7rem; color: #64748b;">Від: ${bug.user_name} | Статус: <b>${bug.status}</b></div>
+            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                <button onclick="changeBugStatus('${bug.id}', '${bug.status}')" class="btn-action btn-edit">Статус</button>
+                <button onclick="deleteBug('${bug.id}')" class="btn-action btn-del">Видалити</button>
+            </div>
+        </article>`).join("");
+        
+    const countEl = document.getElementById("bug-count");
+    if (countEl && bugs) countEl.innerText = bugs.length;
+}
 
-        ["adminSearchInput", "searchInput", "adminStatusFilter", "statusFilter"].forEach(id => {
-            document.getElementById(id)?.addEventListener("input", applyAllFilters);
-            document.getElementById(id)?.addEventListener("change", applyAllFilters);
+function getStatusColor(s) { return s === "Виправлено" ? "#22c55e" : s === "В процесі" ? "#3b82f6" : "#f59e0b"; }
+
+window.changeBugStatus = async (id, s) => {
+    const next = s === "Новий" ? "В процесі" : s === "В процесі" ? "Виправлено" : "Новий";
+    await supabase.from('bugs').update({ status: next }).eq('id', id);
+    renderBugReports();
+};
+window.deleteBug = async (id) => { 
+    if (confirm("Видалити звіт?")) { await supabase.from('bugs').delete().eq('id', id); renderBugReports(); } 
+};
+
+// ==========================================
+// 7. ГОЛОВНИЙ ЗАПУСК
+// ==========================================
+
+window.onload = async () => {
+    await initData(); 
+    const data = getClients();
+    const path = window.location.pathname.toLowerCase();
+
+    // Авторизація
+    const user = currentUser();
+    if (document.getElementById("auth-status") && user) {
+        document.getElementById("auth-status").innerHTML = `<span>${user.fullName}</span> 
+        <button onclick="localStorage.removeItem('currentUser'); location.reload();" class="btn-top-auth" style="padding: 5px 10px; font-size: 12px; margin-left:10px;">Вийти</button>`;
+    }
+
+    // Загальні таблиці
+    refreshAll();
+
+    // Сторінка Менеджменту
+    if (path.includes("manage") || path.includes("manege") || document.getElementById("total-clients")) {
+        renderManagementTable(data);
+        renderManagementStats();
+        document.getElementById("client-search")?.addEventListener("input", (e) => {
+            const filtered = getClients().filter(c => c.name.toLowerCase().includes(e.target.value.toLowerCase()));
+            renderManagementTable(filtered);
         });
+    }
 
-        document.getElementById("adminCrudForm")?.addEventListener("submit", async (e) => {
+    // Сторінка Багів
+    if (path.includes("bug_manager") || document.getElementById("bugReportsList")) {
+        renderBugReports();
+    }
+    
+    // Відправка форми багів
+    const bugForm = document.getElementById("bugReportForm");
+    if (bugForm) {
+        bugForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const report = {
+                subject: document.getElementById("bugSubject").value,
+                category: document.getElementById("bugCategory").value,
+                description: document.getElementById("bugText").value,
+                user_name: user ? user.fullName : "Гість",
+                user_role: user ? user.role : "немає",
+                status: "Новий"
+            };
+            const { error } = await supabase.from('bugs').insert([report]);
+            if (!error) {
+                bugForm.style.display = "none";
+                document.getElementById("reportSuccess").style.display = "block";
+                setTimeout(() => { window.location.href = "index.html"; }, 2500);
+            } else alert("Помилка: " + error.message);
+        };
+    }
+
+    // Форма CRUD (Адмінка)
+    const crudForm = document.getElementById("adminCrudForm");
+    if (crudForm) {
+        crudForm.onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById("editIndex").value;
             const clientData = {
@@ -218,80 +447,19 @@ window.onload = () => {
                 status: document.getElementById("objStatus").value
             };
 
-            if (id === "") {
-                // Створення нового
-                await supabase.from('clients').insert([clientData]);
-            } else {
-                // Оновлення існуючого
-                await supabase.from('clients').update(clientData).eq('id', id);
-            }
+            let res;
+            if (!id || id === "") res = await supabase.from('clients').insert([clientData]);
+            else res = await supabase.from('clients').update(clientData).eq('id', id);
 
-            await initData();
-            location.reload();
-        });
+            if (res.error) alert("Помилка: " + res.error.message);
+            else { await initData(); location.reload(); }
+        };
+    }
+
+    // Пошук
+    ["adminSearchInput", "searchInput", "adminStatusFilter", "statusFilter"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.oninput = applyAllFilters;
+        if (el) el.onchange = applyAllFilters;
     });
 };
-
-// =====================
-// 6. СИСТЕМА БАГІВ (SUPABASE)
-// =====================
-const bugForm = document.getElementById("bugReportForm");
-if (bugForm) {
-    bugForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const user = currentUser();
-        const report = {
-            subject: document.getElementById("bugSubject").value,
-            category: document.getElementById("bugCategory").value,
-            description: document.getElementById("bugText").value,
-            user_name: user ? user.fullName : "Гість",
-            user_role: user ? user.role : "немає",
-            status: "Новий"
-        };
-
-        const { error } = await supabase.from('bugs').insert([report]);
-        
-        if (!error) {
-            bugForm.style.display = "none";
-            document.getElementById("reportSuccess").style.display = "block";
-            setTimeout(() => { window.location.href = "index.html"; }, 2500);
-        }
-    });
-}
-
-async function renderBugReports() {
-    const container = document.getElementById("bugReportsList");
-    if (!container) return;
-
-    const { data: bugs, error } = await supabase.from('bugs').select('*').order('created_at', { ascending: false });
-    if (error) return;
-
-    const countEl = document.getElementById("bug-count");
-    if (countEl) countEl.innerText = bugs.length;
-    
-    container.innerHTML = bugs.map((bug) => `
-        <article class="card-item" style="border-left: 5px solid ${getStatusColor(bug.status)}">
-            <h4 class="card-itemtitle" style="word-break: break-all;">${bug.subject}</h4>
-            <div class="card-company">${bug.category}</div>
-            <p style="background: #f8fafc; padding: 10px; border-radius: 8px; word-break: break-all;">${bug.description}</p>
-            <p style="font-size: 0.8rem;">Від: <b>${bug.user_name}</b> | ${new Date(bug.created_at).toLocaleString()}</p>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="changeBugStatus('${bug.id}', '${bug.status}')" class="btn-action btn-edit">Статус</button>
-                <button onclick="deleteBug('${bug.id}')" class="btn-action btn-del">Видалити</button>
-            </div>
-        </article>`).join("");
-}
-
-function getStatusColor(s) { return s === "Виправлено" ? "#22c55e" : s === "В процесі" ? "#3b82f6" : "#f59e0b"; }
-
-async function deleteBug(id) {
-    await supabase.from('bugs').delete().eq('id', id);
-    renderBugReports();
-}
-
-async function changeBugStatus(id, currentStatus) {
-    const statuses = ["Новий", "В процесі", "Виправлено"];
-    const nextStatus = statuses[(statuses.indexOf(currentStatus) + 1) % 3];
-    await supabase.from('bugs').update({ status: nextStatus }).eq('id', id);
-    renderBugReports();
-}
