@@ -10,7 +10,7 @@
         <h2>CRM System</h2>
         <ul>
             <li><a href="index.html" class="active">Головна</a></li>
-            <li><a href="manege.html">Менеджмент-панель</a></li>
+            <li><a href="manage.html">Менеджмент-панель</a></li>
             <li><a href="admin.html">Адмін-панель</a></li>
             <li><a href="report.html">Знайшли помилку?</a></li>
             <li><a href="bug_manager.html">Менеджер репортів</a></li>
@@ -39,19 +39,17 @@
                 <option value="Постійний">Постійний</option>
                 <option value="VIP">VIP</option>
                 <option value="В роботі">В роботі</option>
+                <option value="active">active</option>
             </select>
         </section>
 
-        <div id="clientsGrid" class="grid">
-            </div>
+        <div id="clientsGrid" class="grid"></div>
 
         <div class="pagination-wrapper" style="margin-top: 30px; display: flex; justify-content: center; flex-direction: column; align-items: center;">
-            <ul id="pagination" class="pagination-list" style="display: flex; list-style: none; gap: 10px; padding: 0;">
-            </ul>
-            <button id="showMoreBtn" class="btn-top-auth" style="margin-top: 15px; display: none;">Показати більше</button>
+            <div id="pagination"></div>
         </div>
     </main>
 
-    <script type = "module" src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

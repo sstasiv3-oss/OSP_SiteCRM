@@ -1,6 +1,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
+// ==========================================
 // 1. НАЛАШТУВАННЯ SUPABASE
+// ==========================================
 const supabaseUrl = 'https://mqvznnhiniqadngotizq.supabase.co'
 const supabaseKey = 'sb_publishable_GmsljKr6QkiBMpljKEXg9Q_cD-iGU1u'
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -12,12 +14,43 @@ let currentFilteredList = [];
 
 const getClients = () => JSON.parse(localStorage.getItem("clients")) || [];
 const currentUser = () => JSON.parse(localStorage.getItem("currentUser"));
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ==========================================
-// 1. РОБОТА З ДАНИМИ
+// 2. АВТОРИЗАЦІЯ ТА РОБОТА З ДАНИМИ
 // ==========================================
 
+// Функція входу (шукає по username та password)
+window.loginUser = async function(username, password) {
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+
+        if (error || !user) {
+            alert("Невірний логін або пароль!");
+            return;
+        }
+
+        // Зберігаємо юзера в пам'ять
+        const userData = {
+            id: user.id,
+            fullName: user.fullName || "Користувач",
+            role: user.role || "manager",
+            username: user.username
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        window.location.href = "index.html";
+    } catch (e) {
+        console.error("Помилка входу:", e.message);
+        alert("Сталася помилка при спробі входу.");
+    }
+};
+
+// Завантаження всіх даних
 async function initData() {
     try {
         const { data: clients, error: clError } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
@@ -27,12 +60,12 @@ async function initData() {
         const { data: users, error: usError } = await supabase.from('users').select('*');
         localStorage.setItem("users", JSON.stringify(usError ? [] : (users || [])));
     } catch (e) {
-        console.error("Критична помилка ініціалізації:", e.message);
+        console.error("Помилка ініціалізації:", e.message);
     }
 }
 
 // ==========================================
-// 2. ВІДОБРАЖЕННЯ (ГОЛОВНА ТА АДМІНКА)
+// 3. ВІДОБРАЖЕННЯ (ГОЛОВНА ТА АДМІНКА)
 // ==========================================
 
 function updateCounters(count) {
@@ -87,7 +120,7 @@ function renderAdminTable(list) {
 }
 
 // ==========================================
-// 3. МЕНЕДЖМЕНТ-ПАНЕЛЬ ТА МОДАЛКА КЛІЄНТА
+// 4. МЕНЕДЖМЕНТ-ПАНЕЛЬ ТА МОДАЛКА КЛІЄНТА
 // ==========================================
 
 window.showClientDetails = function(id) {
@@ -104,7 +137,7 @@ window.showClientDetails = function(id) {
         modal.style.display = "flex";
     }
 
-    const managerName = client.manager || client.manager_name || "Не призначено";
+    const managerName = client.manager || "Не призначено";
 
     modal.innerHTML = `
         <div style="background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 450px; position: relative; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
@@ -194,7 +227,6 @@ function renderManagementTable(list) {
         </tr>`).join("");
 }
 
-// Оновлена функція редагування з полем для менеджера
 window.selectClientForEdit = async function(id) {
     const client = getClients().find(c => String(c.id) === String(id));
     if (!client) return;
@@ -203,10 +235,8 @@ window.selectClientForEdit = async function(id) {
     if (editZone) {
         editZone.style.display = "block";
         
-        // Повністю перемальовуємо зону редагування, щоб додати поле менеджера
         editZone.innerHTML = `
             <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #4f46e5;">Редагування: ${client.name}</h4>
-            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                 <div>
                     <label style="font-size: 0.7rem; font-weight: bold; color: #64748b;">СТАТУС</label>
@@ -220,42 +250,31 @@ window.selectClientForEdit = async function(id) {
                 </div>
                 <div>
                     <label style="font-size: 0.7rem; font-weight: bold; color: #64748b;">МЕНЕДЖЕР</label>
-                    <input type="text" id="edit-manager" class="form-input" placeholder="Ім'я менеджера..." value="${client.manager || ''}" style="width: 100%; padding: 5px; font-size: 0.85rem;">
+                    <input type="text" id="edit-manager" class="form-input" placeholder="Ім'я..." value="${client.manager || ''}" style="width: 100%; padding: 5px; font-size: 0.85rem;">
                 </div>
             </div>
-            
             <label style="font-size: 0.7rem; font-weight: bold; color: #64748b;">НОТАТКИ</label>
             <textarea id="edit-note" class="form-input" style="width: 100%; height: 50px; font-size: 0.8rem;" placeholder="Примітка...">${client.note || ""}</textarea>
-            
             <button id="save-edit-btn" class="btn-submit" style="width: 100%; margin-top: 10px; padding: 8px; font-size: 0.85rem;">Зберегти зміни</button>
         `;
 
         const saveBtn = document.getElementById("save-edit-btn");
-
         saveBtn.onclick = async () => {
             saveBtn.innerText = "Зберігаю...";
-            
-            // Збираємо нові дані з форми
             const updatedData = {
                 status: document.getElementById("edit-status").value,
-                manager: document.getElementById("edit-manager").value, // Зберігаємо менеджера
+                manager: document.getElementById("edit-manager").value,
                 note: document.getElementById("edit-note").value
             };
-
             const { error } = await supabase.from('clients').update(updatedData).eq('id', id);
-            
-            if (!error) {
-                location.reload(); 
-            } else {
-                alert("Помилка: " + error.message);
-                saveBtn.innerText = "Зберегти зміни";
-            }
+            if (!error) location.reload();
+            else { alert("Помилка: " + error.message); saveBtn.innerText = "Зберегти зміни"; }
         };
     }
 };
 
 // ==========================================
-// 4. ФІЛЬТРИ ТА КЕРУВАННЯ
+// 5. ФІЛЬТРИ ТА КЕРУВАННЯ
 // ==========================================
 
 window.deleteClient = async (id) => { 
@@ -303,7 +322,7 @@ function refreshAll() {
 }
 
 // ==========================================
-// 5. ПАГІНАЦІЯ
+// 6. ПАГІНАЦІЯ
 // ==========================================
 
 function renderPagination(totalItems) {
@@ -341,7 +360,7 @@ function renderPagination(totalItems) {
 }
 
 // ==========================================
-// 6. СИСТЕМА БАГІВ
+// 7. СИСТЕМА БАГІВ
 // ==========================================
 
 async function renderBugReports() {
@@ -378,22 +397,52 @@ window.deleteBug = async (id) => {
 };
 
 // ==========================================
-// 7. ГОЛОВНИЙ ЗАПУСК
+// 8. ГОЛОВНИЙ ЗАПУСК ТА АВТОРИЗАЦІЯ
 // ==========================================
 
 window.onload = async () => {
-    await initData(); 
-    const data = getClients();
+    const user = currentUser();
     const path = window.location.pathname.toLowerCase();
 
-    // Авторизація
-    const user = currentUser();
+    // ЗАХИСТ 1: Якщо юзера немає і ми НЕ на сторінці логіну — викидаємо на логін
+    if (!user && !path.includes("login.html")) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    // Якщо ми на сторінці логіну, далі нічого не завантажуємо (бо форма має свою логіку)
+    if (path.includes("login.html")) return;
+
+    // ЗАХИСТ 2: Розмежування прав доступу (ховаємо адмінку від менеджерів)
+    if (user && user.role !== 'admin' && user.role !== 'owner') {
+        // Ховаємо кнопку в меню
+        const adminLinks = document.querySelectorAll('a[href="admin.html"]');
+        adminLinks.forEach(link => {
+            if (link.parentElement && link.parentElement.tagName === 'LI') {
+                link.parentElement.style.display = 'none';
+            } else {
+                link.style.display = 'none';
+            }
+        });
+
+        // Забороняємо прямий перехід на сторінку
+        if (path.includes("admin.html")) {
+            alert("У вас немає доступу до Адмін-панелі!");
+            window.location.href = "index.html";
+            return;
+        }
+    }
+
+    // --- ОСНОВНА ЛОГІКА ДОДАТКУ ---
+    await initData(); 
+    const data = getClients();
+
+    // Авторизація UI
     if (document.getElementById("auth-status") && user) {
-        document.getElementById("auth-status").innerHTML = `<span>${user.fullName}</span> 
+        document.getElementById("auth-status").innerHTML = `<span>${user.fullName} (${user.role})</span> 
         <button onclick="localStorage.removeItem('currentUser'); location.reload();" class="btn-top-auth" style="padding: 5px 10px; font-size: 12px; margin-left:10px;">Вийти</button>`;
     }
 
-    // Загальні таблиці
     refreshAll();
 
     // Сторінка Менеджменту
@@ -411,7 +460,7 @@ window.onload = async () => {
         renderBugReports();
     }
     
-    // Відправка форми багів
+    // Форма Багів
     const bugForm = document.getElementById("bugReportForm");
     if (bugForm) {
         bugForm.onsubmit = async (e) => {
@@ -433,7 +482,7 @@ window.onload = async () => {
         };
     }
 
-    // Форма CRUD (Адмінка)
+    // Форма CRUD
     const crudForm = document.getElementById("adminCrudForm");
     if (crudForm) {
         crudForm.onsubmit = async (e) => {
